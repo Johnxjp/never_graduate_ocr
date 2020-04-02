@@ -131,6 +131,28 @@ def remove_false_positives(
     return [item for item in items if not is_false_positive(image, item)]
 
 
+def overlaps(b1: BoundingBox, b2: BoundingBox) -> bool:
+    pass
+
+
+def filter_overlapping_boxes(detections: Sequence[Detections]) -> Sequence[Detections]:
+
+    prev_item = detections[0]
+    filtered_boxes = [prev_item]
+    overlapping_items = []
+    for curr_item in detections[1:]:
+        if overlaps(curr_item, prev_item):
+            overlapping_items.append(curr_item)
+
+        elif overlapping_items:
+            filtered_boxes.append(overlapping_items[-1])
+            overlapping_items = []
+
+        filter_overlapping_boxes.append(curr_item)
+
+    return filtered_boxes
+
+
 def main():
     image = load_img()
     image = thresholding(opening(to_grayscale(image)))
