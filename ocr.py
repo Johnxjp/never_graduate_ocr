@@ -36,7 +36,7 @@ class Detections:
 
 
 def load_img() -> Image:
-    return cv2.imread("start.jpg")
+    return cv2.imread("assets/start.jpg")
 
 
 def to_grayscale(image: Image) -> Image:
@@ -188,7 +188,7 @@ def fill_boxes(image: Image, boxes: Sequence[BoundingBox]) -> Image:
 def main():
     original_image = load_img()
     modified_image = thresholding(opening(to_grayscale(original_image)))
-    cv2.imwrite("modified.jpg", modified_image)
+    cv2.imwrite("assets/modified.jpg", modified_image)
     chars, boxes = extract_bounding_boxes(modified_image)
     detections = [Detections(c, b) for c, b in zip(chars, boxes)]
     detections = remove_false_positives(modified_image, detections)
@@ -197,29 +197,20 @@ def main():
     annotated_image = draw_bounding_boxes(
         modified_image, [d.box for d in sorted_detections]
     )
-    cv2.imwrite("annotated.jpg", annotated_image)
+    cv2.imwrite("assets/annotated.jpg", annotated_image)
 
     chars, boxes = zip(*[(d.char, d.box) for d in sorted_detections])
-    image_resized = (300, 300)
-
-    cv2.imshow("Original", cv2.resize(original_image, image_resized))
-    cv2.imshow("Modified", cv2.resize(modified_image, image_resized))
-    cv2.imshow("Annotated", cv2.resize(annotated_image, image_resized))
-
-    while True:
-        all_solutions = find_valid_solutions(chars)
-        # Find all valid solutions for "never graduate"
-        # Finding all requires a recursive approach
-        # Choose solution
-        indexes = np.arange(len(boxes))
-        solution_id = np.random.randint(0, len(all_solutions))
-        solution = all_solutions[solution_id]
-        remaining_inds = np.array([i for i in indexes if i not in solution])
-        boxes_to_color = np.array(boxes)[remaining_inds]
-        filled_image = fill_boxes(modified_image, boxes_to_color)
-        cv2.imshow("image", cv2.resize(filled_image, image_resized))
-        cv2.waitKey(0)
-        cv2.imwrite("filled.jpg", filled_image)
+    all_solutions = find_valid_solutions(chars)
+    # Find all valid solutions for "never graduate"
+    # Finding all requires a recursive approach
+    # Choose solution
+    indexes = np.arange(len(boxes))
+    solution_id = np.random.randint(0, len(all_solutions))
+    solution = all_solutions[solution_id]
+    remaining_inds = np.array([i for i in indexes if i not in solution])
+    boxes_to_color = np.array(boxes)[remaining_inds]
+    filled_image = fill_boxes(modified_image, boxes_to_color)
+    cv2.imwrite(f"assets/filled.jpg", filled_image)
 
 
 main()
