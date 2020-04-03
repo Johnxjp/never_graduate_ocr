@@ -17,8 +17,14 @@ the desired phrase.
 ![NEVER GRADUATE](assets/never_graduate.gif)
 
 ## Install
+This package uses python 3.7 and tesseract.
 
 ```
 brew install tesseract
 pip install -r requirements.txt
+```
+
+## Run
+```
+python3 ocr.py
 ```
