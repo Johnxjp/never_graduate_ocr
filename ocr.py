@@ -36,7 +36,7 @@ class Detections:
 
 
 def load_img() -> Image:
-    return cv2.imread("image4.jpg")
+    return cv2.imread("start.jpg")
 
 
 def to_grayscale(image: Image) -> Image:
@@ -73,17 +73,18 @@ def extract_bounding_boxes(image: Image) -> Tuple[Sequence[str], Sequence[Boundi
 
 
 def draw_bounding_boxes(image: Image, bounding_boxes: Sequence[BoundingBox]) -> Image:
+    new_image = image.copy()
     height = image.shape[0]
     for box in bounding_boxes:
-        image = cv2.rectangle(
-            image,
+        new_image = cv2.rectangle(
+            new_image,
             (box.left, height - box.top),
             (box.right, height - box.bottom),
             (0, 0, 255),
             thickness=2,
         )
 
-    return image
+    return new_image
 
 
 def at_same_level(b1: BoundingBox, b2: BoundingBox) -> bool:
@@ -149,36 +150,76 @@ def filter_overlapping_boxes(detections: Sequence[Detections]) -> Sequence[Detec
     return filtered_boxes
 
 
+def find_valid_solutions(chars: Sequence[str]) -> Sequence[int]:
+    """Returns all the possible index combos of NEVER GRADUATE"""
+    solutions = []
+    search_chars = "NEVERGRADUATE"
+
+    def helper(
+        char_sequence: Sequence[str], curr_index: int, curr_solution: Sequence[int]
+    ) -> None:
+        if len(char_sequence) == 0:
+            solutions.append(curr_solution)
+            return
+
+        char_to_find = char_sequence[0]
+        for i in range(curr_index, len(chars)):
+            if chars[i] == char_to_find:
+                helper(char_sequence[1:], i + 1, curr_solution + [i])
+
+    helper(search_chars, 0, [])
+    return solutions
+
+
+def fill_boxes(image: Image, boxes: Sequence[BoundingBox]) -> Image:
+    height = image.shape[0]
+    new_image = image.copy()
+    for box in boxes:
+        new_image = cv2.rectangle(
+            new_image,
+            (box.left, height - box.top),
+            (box.right, height - box.bottom),
+            (255, 255, 255),
+            thickness=-1,
+        )
+    return new_image
+
+
 def main():
-    image = load_img()
-    image = thresholding(opening(to_grayscale(image)))
-    cv2.imwrite("modified.jpg", image)
-    chars, boxes = extract_bounding_boxes(image)
+    original_image = load_img()
+    modified_image = thresholding(opening(to_grayscale(original_image)))
+    cv2.imwrite("modified.jpg", modified_image)
+    chars, boxes = extract_bounding_boxes(modified_image)
     detections = [Detections(c, b) for c, b in zip(chars, boxes)]
-    detections = remove_false_positives(image, detections)
+    detections = remove_false_positives(modified_image, detections)
     detections = filter_overlapping_boxes(detections)
     sorted_detections = sort_top_left(detections)
-    image = draw_bounding_boxes(image, [d.box for d in sorted_detections])
-    # for c, b in sorted_items:
-    #     image = draw_bounding_boxes(image, [b])
-    #     print("Drawing ", c, b)
-    #     cv2.imshow("image", image)
-    #     cv2.waitKey(0)
+    annotated_image = draw_bounding_boxes(
+        modified_image, [d.box for d in sorted_detections]
+    )
+    cv2.imwrite("annotated.jpg", annotated_image)
 
-    cv2.imwrite("annotated.jpg", image)
+    chars, boxes = zip(*[(d.char, d.box) for d in sorted_detections])
+    image_resized = (300, 300)
 
-    # i0 = sorted_items[6][1]
-    # print(image.shape)
-    # print(sorted_items[6][0], i0)
+    cv2.imshow("Original", cv2.resize(original_image, image_resized))
+    cv2.imshow("Modified", cv2.resize(modified_image, image_resized))
+    cv2.imshow("Annotated", cv2.resize(annotated_image, image_resized))
 
-    # image_height = image.shape[0]
-    # h = i0.top - i0.bottom
-    # w = i0.right - i0.left
-    # top = image_height - i0.top
-
-    # new_image = image[top : top + h, i0.left : i0.left + w]
-    # print(new_image)
-    # cv2.imwrite("extracted_image.jpg", new_image)
+    while True:
+        all_solutions = find_valid_solutions(chars)
+        # Find all valid solutions for "never graduate"
+        # Finding all requires a recursive approach
+        # Choose solution
+        indexes = np.arange(len(boxes))
+        solution_id = np.random.randint(0, len(all_solutions))
+        solution = all_solutions[solution_id]
+        remaining_inds = np.array([i for i in indexes if i not in solution])
+        boxes_to_color = np.array(boxes)[remaining_inds]
+        filled_image = fill_boxes(modified_image, boxes_to_color)
+        cv2.imshow("image", cv2.resize(filled_image, image_resized))
+        cv2.waitKey(0)
+        cv2.imwrite("filled.jpg", filled_image)
 
 
 main()
