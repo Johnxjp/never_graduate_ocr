@@ -1,7 +1,7 @@
 # Never Graduate
 
 Small program that uses OCR to extract the phrase "NEVER GRADUATE" from a hand-drawn
-grid of letters. This project uses OpenCV2 for image manipulation and Pytesseract is used for OCR.
+grid of letters. This project was an entry to a challenge held by the [Recurse Center](https://www.recurse.com/). It uses OpenCV2 for image manipulation and Pytesseract is used for OCR.
 
 ## How it works
 
@@ -17,6 +17,7 @@ the desired phrase.
 ![NEVER GRADUATE](assets/never_graduate.gif)
 
 ## Install
+
 This package uses python 3.7 and tesseract.
 
 ```
@@ -25,6 +26,7 @@ pip install -r requirements.txt
 ```
 
 ## Run
+
 ```
 python3 ocr.py
 ```
