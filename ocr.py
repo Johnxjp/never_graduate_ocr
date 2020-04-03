@@ -132,24 +132,20 @@ def remove_false_positives(
 
 
 def overlaps(b1: BoundingBox, b2: BoundingBox) -> bool:
-    pass
+    if (b1.right < b2.left) or (b1.left > b2.right):
+        return False
+    if (b1.bottom > b2.top) or (b1.top < b2.bottom):
+        return False
+    return True
 
 
 def filter_overlapping_boxes(detections: Sequence[Detections]) -> Sequence[Detections]:
+    filtered_boxes = []
+    for prev_item, curr_item in zip(detections[:-1], detections[1:]):
+        if not overlaps(curr_item.box, prev_item.box):
+            filtered_boxes.append(prev_item)
 
-    prev_item = detections[0]
-    filtered_boxes = [prev_item]
-    overlapping_items = []
-    for curr_item in detections[1:]:
-        if overlaps(curr_item, prev_item):
-            overlapping_items.append(curr_item)
-
-        elif overlapping_items:
-            filtered_boxes.append(overlapping_items[-1])
-            overlapping_items = []
-
-        filter_overlapping_boxes.append(curr_item)
-
+    filtered_boxes.append(curr_item)
     return filtered_boxes
 
 
@@ -159,7 +155,8 @@ def main():
     cv2.imwrite("modified.jpg", image)
     chars, boxes = extract_bounding_boxes(image)
     detections = [Detections(c, b) for c, b in zip(chars, boxes)]
-    # detections = remove_false_positives(image, detections)
+    detections = remove_false_positives(image, detections)
+    detections = filter_overlapping_boxes(detections)
     sorted_detections = sort_top_left(detections)
     image = draw_bounding_boxes(image, [d.box for d in sorted_detections])
     # for c, b in sorted_items:
@@ -168,7 +165,7 @@ def main():
     #     cv2.imshow("image", image)
     #     cv2.waitKey(0)
 
-    cv2.imwrite("annotated_non_white.jpg", image)
+    cv2.imwrite("annotated.jpg", image)
 
     # i0 = sorted_items[6][1]
     # print(image.shape)
